@@ -1,0 +1,123 @@
+---
+title: "Course Project 2"
+author: "Roberto Nisti"
+date: "7 de julho de 2016"
+output: html_document
+---
+
+We analized Storm data from USA to discovery which has more impact.
+
+'##R version 3.2.3 (2015-12-10)
+'##Platform: x86_64-w64-mingw32/x64 (64-bit)
+'##Running under: Windows >= 8 x64 (build 9200)
+
+'##locale:
+'##[1] LC_COLLATE=Portuguese_Brazil.1252  LC_CTYPE=Portuguese_Brazil.1252   
+'##[3] LC_MONETARY=Portuguese_Brazil.1252 LC_NUMERIC=C                      
+'##[5] LC_TIME=Portuguese_Brazil.1252    
+
+'##attached base packages:
+'##[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+'##other attached packages:
+'##[1] data.table_1.9.6 dplyr_0.4.3     
+
+'##loaded via a namespace (and not attached):
+'## [1] lazyeval_0.1.10   magrittr_1.5      R6_2.1.1          assertthat_0.1   
+'## [5] rsconnect_0.4.1.4 htmltools_0.2.6   parallel_3.2.3    DBI_0.3.1        
+'## [9] tools_3.2.3       yaml_2.1.13       Rcpp_0.12.2       rmarkdown_0.8.1  
+'##[13] digest_0.6.8      chron_2.3-47     
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+Libraries - We need this libraries to manipualted data
+```{r}
+library(dplyr)
+library(data.table)
+```
+
+This is our source of information, explain about data, click in https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf
+
+```{r}
+file_down <- 
+  download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2","storm_data.bz2")
+storm_data <- read.csv("storm_data.bz2")
+```
+
+We only data about injuries, fatalities and damages
+```{r}
+injurie_data <- data.frame(storm_data$EVTYPE, storm_data$INJURIES, 
+                           storm_data$FATALITIES, storm_data$PROPDMG)
+names(injurie_data) <- c("EVTYPE", "INJURIES", "FATALITIES", "PROPDAMAGE")
+dat2 <- injurie_data
+```
+
+
+Cleaning and preparing data - description information is not standarlized, so 
+we devided data between some categories. First we inserted a description 
+"WATHELSE" in all register, if any description doesn't match  in any category, 
+we included in "OTHER"
+```{r}
+dat2$EVTYPE <- gsub(dat2$EVTYPE, toupper(dat2$EVTYPE), dat2$EVTYPE)
+dat2$EVTYPE <- paste("WHATELSE", dat2$EVTYPE )
+dat2$EVTYPE <- gsub('.*STORM.*', 'STORM', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*HEAT.*', 'HEAT', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*SNOW.*', 'SNOW', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*WIND.*', 'WIND', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*SUMMARY.*', 'SUMMARY', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*WARM.*', 'WARM', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*RAIN.*', 'RAIN', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*COLD.*', 'COLD', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*ICE.*', 'ICE', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*DRY.*', 'DRY', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*TORN.*', 'TORNADO', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*LOW.*', 'COLD', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*WINTER.*', 'COLD', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*DRIE.*', 'DRY', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*WINTER.*', 'WINTER', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*FREEZA.*', 'WINTER', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*FREEZE.*', 'WINTER', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*HAIL.*', 'HAIL', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*HURRICANE.*', 'HURRICANE', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*FLOO.*', 'FLOOD', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*STREAM.*', 'FLOOD', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*HIGH.*TEMPER.*', 'WARM', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*HOT.*', 'WARM', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*COOL.*', 'WINTER', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*FROST.*', 'WINTER', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*FIRE.*', 'FIRE', dat2$EVTYPE)
+dat2$EVTYPE <- gsub('.*WHATELSE.*', 'OTHER', dat2$EVTYPE)
+```
+
+
+Data about Injuries
+```{r}
+x <- aggregate( dat2$INJURIES ~ dat2$EVTYPE, dat2, sum)
+names(x) <- list("EVTYPE", "INJURIES")
+z <- subset(x, x$INJURIES != 0)
+names(z) <- list("EVTYPE", "INJURIES")
+z <- arrange(select(z, EVTYPE, INJURIES), desc(INJURIES))[1:10,]
+barplot(height = z$INJURIES, names.arg = z$EVTYPE, las=2)
+```
+
+Data about Fatalities
+```{r}
+x <- aggregate( dat2$FATALITIES ~ dat2$EVTYPE, dat2, sum)
+names(x) <- list("EVTYPE", "FATALITIES")
+z <- subset(x, x$FATALITIES != 0)
+names(z) <- list("EVTYPE", "FATALITIES")
+z <- arrange(select(z, EVTYPE, FATALITIES), desc(FATALITIES))[1:10,]
+barplot(height = z$FATALITIES, names.arg = z$EVTYPE, las=2)
+```
+
+Data about Damage
+```{r}
+x <- aggregate( dat2$PROPDAMAGE ~ dat2$EVTYPE, dat2, sum)
+names(x) <- list("EVTYPE", "PROPDAMAGE")
+z <- subset(x, x$PROPDAMAGE != 0)
+names(z) <- list("EVTYPE", "PROPDAMAGE")
+z <- arrange(select(z, EVTYPE, PROPDAMAGE), desc(PROPDAMAGE))[1:10,]
+barplot(height = z$PROPDAMAGE, names.arg = z$EVTYPE, las=2)
+```
